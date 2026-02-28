@@ -29,6 +29,7 @@ public class PopUp: NSStackView {
         alignment = .firstBaseline
         spacing = 7
 
+        button.font = .systemFont(ofSize: NSFont.systemFontSize(for: controlSize))
         button.controlSize = controlSize
         button.target = self
         button.action = #selector(buttonAction)

@@ -15,6 +15,7 @@ public class Button: NSButton {
         }
 
         self.bezelStyle = .rounded
+        self.font = .systemFont(ofSize: NSFont.systemFontSize(for: controlSize))
         self.controlSize = controlSize
         self.image = image
         self.symbolConfiguration = symbolConfiguration
