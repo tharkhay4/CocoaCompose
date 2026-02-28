@@ -20,7 +20,7 @@ public class PopUp: NSStackView {
         }
     }
     
-    public init(items: [Item] = [], selectedIndex: Int = -1, trailingText: String? = nil, isTruncating: Bool = false, onChange: ((Int, String) -> Void)? = nil) {
+    public init(items: [Item] = [], selectedIndex: Int = -1, trailingText: String? = nil, isTruncating: Bool = false, controlSize: NSControl.ControlSize = .regular, onChange: ((Int, String) -> Void)? = nil) {
         self.items = items
         self.onChange = onChange
         
@@ -29,7 +29,7 @@ public class PopUp: NSStackView {
         alignment = .firstBaseline
         spacing = 7
 
-        button.font = .preferredFont(forTextStyle: .body)
+        button.controlSize = controlSize
         button.target = self
         button.action = #selector(buttonAction)
         
