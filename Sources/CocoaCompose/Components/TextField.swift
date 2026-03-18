@@ -18,8 +18,8 @@ public class TextField: NSStackView, NSTextFieldDelegate {
         alignment = .firstBaseline
         spacing = 7
         
-        if let value = attributedValue {
-            textField.attributedStringValue = value
+        if let attributedValue {
+            textField.attributedStringValue = attributedValue
         } else {
             textField.stringValue = value ?? ""
         }
@@ -32,17 +32,16 @@ public class TextField: NSStackView, NSTextFieldDelegate {
         textField.isBezeled = true
         textField.bezelStyle = .squareBezel
         textField.maximumNumberOfLines = 1
-        
-        textField.cell?.truncatesLastVisibleLine = true
+        textField.lineBreakMode = .byTruncatingTail
         
         textField.delegate = self
         
         if let width {
             let constraint = textField.widthAnchor.constraint(equalToConstant: width)
-            constraint.priority = .defaultHigh
+            constraint.priority = .defaultLow
             constraint.isActive = true
         }
-        
+       
         addArrangedSubview(textField)
         
         label.stringValue = trailingText ?? ""

@@ -1,32 +1,55 @@
 import Cocoa
 
-public class PreferenceGroup: NSStackView {
-    private var titleLabels: [Label]
+public class PreferenceGroup: ConstrainingStackView {
+    private var leadingViews: [NSView] = []
     
-    var leadAnchor: NSLayoutDimension? { titleLabels.first?.widthAnchor }
+    var leadingWidthAnchor: NSLayoutDimension? { leadingViews.first?.widthAnchor }
 
     public struct Item {
-        public var title: String
+        public var title: String?
         public var views: [NSView]
         
-        public init(title: String, views: [NSView] = []) {
+        public init(title: String? = nil, views: [NSView] = []) {
             self.title = title
             self.views = views
         }
     }
 
-    public init(items: [Item]) {
-        var labels: [Label] = []
-        var stackViews: [NSStackView] = []
+    public init(footer: String? = nil, alignment: NSLayoutConstraint.Attribute = .leading, items: [Item]) {
+        super.init(frame: .zero)
+
+        self.distribution = .fill
+        self.orientation = .vertical
+        self.alignment = alignment
+        self.spacing = 7
         
+        self.wantsLayer = true
+        self.layer?.masksToBounds = false
+
         for item in items {
-            let label = Label()
-            label.stringValue = item.title
-            label.font = .preferredFont(forTextStyle: .body)
-            label.textColor = .labelColor
-            label.alignment = .right
+            let stackView = NSStackView()
+            stackView.distribution = .fill
+            stackView.orientation = .horizontal
+            stackView.alignment = .top
+            stackView.spacing = 7
             
-            labels.append(label)
+            if let title = item.title {
+                let label = Label()
+                label.stringValue = title
+                label.font = .preferredFont(forTextStyle: .body)
+                label.textColor = .labelColor
+                label.alignment = .right
+
+                leadingViews.append(label)
+
+                stackView.addArrangedSubview(label)
+
+            } else {
+                let view = NSView()
+                leadingViews.append(view)
+
+                stackView.addArrangedSubview(view)
+            }
 
             let rowStack = NSStackView(views: item.views)
             rowStack.distribution = .fill
@@ -34,17 +57,15 @@ public class PreferenceGroup: NSStackView {
             rowStack.alignment = .firstBaseline
             rowStack.spacing = 12
             
-            let stackView = NSStackView(views: [label, rowStack])
-            stackView.distribution = .fill
-            stackView.orientation = .horizontal
-            stackView.alignment = .top
-            stackView.spacing = 7
-            
-            stackViews.append(stackView)
+            stackView.addArrangedSubview(rowStack)
+
+            addArrangedSubview(stackView)
             
             if let view = item.views.first {
                 switch view {
-                case is TextField, is Button, is PopUp:
+                case is Button, is Checkbox, is DatePicker, is FontPicker, is PopUp, is TextField, is TimePicker:
+                    stackView.alignment = .firstBaseline
+                case is NSButton, is NSTextField:
                     stackView.alignment = .firstBaseline
                 default:
                     break
@@ -52,24 +73,28 @@ public class PreferenceGroup: NSStackView {
             }
         }
         
-        self.titleLabels = labels
-        
-        super.init(frame: .zero)
+        if let footer {
+            let label = Label()
+            label.stringValue = footer
+            label.font = .preferredFont(forTextStyle: .subheadline)
+            label.textColor = .secondaryLabelColor
+            label.usesSingleLineMode = false
 
-        self.distribution = .fill
-        self.orientation = .vertical
-        self.alignment = .leading
-        self.spacing = 7
-        
-        self.wantsLayer = true
-        self.layer?.masksToBounds = false
+            label.setContentHuggingPriority(.init(rawValue: 1), for: .horizontal)
+            label.setContentCompressionResistancePriority(.init(rawValue: 1), for: .horizontal)
+            
+            let view = NSView()
+            leadingViews.append(view)
 
-        stackViews.forEach { addArrangedSubview($0) }
-        
-        let width = widthAnchor.constraint(equalToConstant: 10_000)
-        width.priority = .defaultLow
-        width.isActive = true
+            let stackView = NSStackView(views: [view, label])
+            stackView.distribution = .fill
+            stackView.orientation = .horizontal
+            stackView.alignment = .top
+            stackView.spacing = 7
 
+            addArrangedSubview(stackView)
+        }
+        
         alignLeadAnchors()
     }
     
@@ -78,7 +103,7 @@ public class PreferenceGroup: NSStackView {
     }
     
     private func alignLeadAnchors() {
-        let anchors = titleLabels.map { $0.widthAnchor }
+        let anchors = leadingViews.map { $0.widthAnchor }
         if let first = anchors.first {
             for anchor in anchors where anchor != first {
                 anchor.constraint(equalTo: first).isActive = true

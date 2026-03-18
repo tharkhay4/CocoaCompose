@@ -1,56 +1,47 @@
 import Cocoa
 
-public class PreferenceBlock: NSStackView {
-    public init(title: String? = nil, footer: String? = nil, orientation: NSUserInterfaceLayoutOrientation = .vertical, distribution: NSStackView.Distribution = .fill, alignment: NSLayoutConstraint.Attribute? = nil, spacing: Double? = nil, views: [NSView]) {
-        super.init(frame: .zero)
+public class PreferenceBlock: ConstrainingStackView {
+    public init(title: String? = nil, footer: String? = nil, orientation: NSUserInterfaceLayoutOrientation = .vertical, alignment: NSLayoutConstraint.Attribute = .leading, spacing: Double? = nil, views: [NSView]) {
+        super.init(orientation: .vertical, alignment: alignment, views: [])
 
         self.distribution = .fill
-        self.orientation = .vertical
-        self.alignment = .leading
         self.spacing = 7
         
         self.wantsLayer = true
         self.layer?.masksToBounds = false
 
+        if let title {
+            let label = Label()
+            label.stringValue = title
+            label.font = .preferredFont(forTextStyle: .body)
+            label.textColor = .labelColor
+            label.alignment = .left
+            
+            label.setContentHuggingPriority(.init(rawValue: 1), for: .horizontal)
+
+            addArrangedSubview(label)
+        }
+
         let itemStack = NSStackView(views: views)
         itemStack.orientation = orientation
-        itemStack.distribution = distribution
-        itemStack.alignment = alignment ?? (orientation == .vertical ? .leading : .top)
+        itemStack.alignment = orientation == .vertical ? .leading : .top
+        itemStack.distribution = .fill
         itemStack.spacing = spacing ?? (orientation == .vertical ? 7 : 12)
         
-        let stackView = NSStackView(views: [itemStack])
-        stackView.distribution = .fill
-        stackView.orientation = .vertical
-        stackView.alignment = .leading
-        stackView.spacing = 7
-        
-        let width = stackView.widthAnchor.constraint(equalToConstant: 10_000)
-        width.priority = .defaultLow
-        width.isActive = true
-
-        if let title {
-            let titleLabel = Label()
-            titleLabel.stringValue = title
-            titleLabel.font = .preferredFont(forTextStyle: .body)
-            titleLabel.textColor = .labelColor
-            titleLabel.alignment = .right
-
-            addArrangedSubview(titleLabel)
-        }
+        addArrangedSubview(itemStack)
 
         if let footer {
-            let footerLabel = Label()
-            footerLabel.stringValue = footer
-            footerLabel.font = .preferredFont(forTextStyle: .subheadline)
-            footerLabel.textColor = .secondaryLabelColor
-            footerLabel.usesSingleLineMode = false
+            let label = Label()
+            label.stringValue = footer
+            label.font = .preferredFont(forTextStyle: .subheadline)
+            label.textColor = .secondaryLabelColor
+            label.usesSingleLineMode = false
 
-            footerLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+            label.setContentHuggingPriority(.init(rawValue: 1), for: .horizontal)
+            label.setContentCompressionResistancePriority(.init(rawValue: 1), for: .horizontal)
             
-            stackView.addArrangedSubview(footerLabel)
+            addArrangedSubview(label)
         }
-        
-        addArrangedSubview(stackView)
     }
     
     required init?(coder: NSCoder) {

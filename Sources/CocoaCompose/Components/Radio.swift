@@ -1,6 +1,6 @@
 import Cocoa
 
-public class Radio: NSStackView {
+public class Radio: ConstrainingStackView {
     private let items: [Item]
     private var buttons: [NSButton] = []
     
@@ -24,25 +24,23 @@ public class Radio: NSStackView {
         }
     }
 
-    public init(items: [Item] = [], selectedIndex: Int = -1, onChange: ((Int, Int) -> Void)? = nil) {
+    public init(items: [Item] = [], selectedIndex: Int = -1, spacing: CGFloat = 7, onChange: ((Int, Int) -> Void)? = nil) {
         self.items = items
         self.currentIndex = selectedIndex
         self.onChange = onChange
 
-        super.init(frame: .zero)
-        
+        super.init(orientation: .vertical, alignment: .width, views: [])
+
         self.distribution = .fill
-        self.orientation = .vertical
-        self.alignment = .leading
-        self.spacing = 7
-        
-        let width = self.widthAnchor.constraint(equalToConstant: 10_000)
-        width.priority = .defaultLow
-        width.isActive = true
+        self.spacing = spacing
         
         for index in 0 ..< items.count {
             let item = items[index]
             
+            let itemStack = ConstrainingStackView(orientation: .vertical, alignment: .width, views: [])
+            itemStack.distribution = .fill
+            itemStack.spacing = 7
+
             let button = NSButton()
             button.font = .preferredFont(forTextStyle: .body)
             button.setButtonType(.radio)
@@ -58,17 +56,35 @@ public class Radio: NSStackView {
 
             buttons.append(button)
             
-            let stackView = NSStackView(views: [button] + item.views)
-            stackView.distribution = .fill
-            stackView.orientation = item.orientation
-            stackView.alignment = item.orientation == .vertical ? .leading : .firstBaseline
-            stackView.spacing = item.orientation == .vertical ? 7 : 10
-            
-            addArrangedSubview(stackView)
-            
-            let width = stackView.widthAnchor.constraint(equalToConstant: 10_000)
-            width.priority = .defaultLow
-            width.isActive = true
+            if item.views.isEmpty {
+                let buttonRow = NSStackView(views: [button, NSView()])
+                buttonRow.orientation = .horizontal
+                buttonRow.spacing = 0
+                
+                itemStack.addArrangedSubview(buttonRow)
+
+            } else {
+                let stackView = NSStackView()
+                stackView.distribution = .fill
+                stackView.orientation = item.orientation
+                stackView.alignment = item.orientation == .vertical ? .leading : .firstBaseline
+                stackView.spacing = item.orientation == .vertical ? 7 : 10
+
+                if item.orientation == .vertical {
+                    let buttonRow = NSStackView(views: [button, NSView()])
+                    buttonRow.orientation = .horizontal
+                    buttonRow.spacing = 0
+
+                    stackView.addArrangedSubview(buttonRow)
+                    
+                } else {
+                    stackView.addArrangedSubview(button)
+                }
+                
+                stackView.addArrangedSubviews(item.views)
+
+                itemStack.addArrangedSubview(stackView)
+            }
 
             if let footer = item.footer {
                 let footerLabel = Label()
@@ -77,10 +93,12 @@ public class Radio: NSStackView {
                 footerLabel.textColor = .secondaryLabelColor
                 footerLabel.usesSingleLineMode = false
 
-                footerLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+                footerLabel.setContentCompressionResistancePriority(.init(rawValue: 1), for: .horizontal)
                 
-                addArrangedSubview(footerLabel)
+                itemStack.addArrangedSubview(footerLabel)
             }
+            
+            addArrangedSubview(itemStack)
         }
         
         update(selectedIndex: selectedIndex)
@@ -90,44 +108,39 @@ public class Radio: NSStackView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    public var isEnabled: Bool = true {
+        didSet {
+            for index in 0 ..< items.count {
+                buttons[index].isEnabled = isEnabled
+                items[index].views.forEach { $0.setSubviewControlsEnabled(isEnabled) }
+            }
+            
+            if isEnabled {
+                update(selectedIndex: currentIndex)
+            }
+        }
+    }
+    
     public var selectedIndex: Int {
         get { currentIndex }
         set { update(selectedIndex: newValue) }
     }
     
-    public func setEnabled(_ enabled: Bool) {
-        for index in 0 ..< items.count {
-            buttons[index].isEnabled = enabled
-            items[index].views.forEach { $0.enableSubviews(enabled) }
-        }
-        
-        if enabled {
-            update(selectedIndex: currentIndex)
-        }
-    }
-
     private func update(selectedIndex: Int) {
         currentIndex = selectedIndex
         
         for index in 0 ..< items.count {
             buttons[index].state = selectedIndex == index ? .on : .off
-            items[index].views.forEach { $0.enableSubviews(selectedIndex == index) }
+            items[index].views.forEach { $0.setSubviewControlsEnabled(selectedIndex == index) }
         }
     }
     
     // MARK: - Actions
     
     @objc func buttonAction(_ sender: NSButton) {
-        for index in 0 ..< buttons.count where index != sender.tag {
-            buttons[index].state = .off
-            items[index].views.forEach { $0.enableSubviews(false) }
-        }
-
-        items[sender.tag].views.forEach { $0.enableSubviews(true) }
-
         let previousIndex = selectedIndex
-        selectedIndex = sender.tag
-
+        update(selectedIndex: sender.tag)
+        
         onChange?(selectedIndex, previousIndex)
     }
 }

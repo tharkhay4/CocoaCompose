@@ -22,8 +22,8 @@ public class Checkbox: NSStackView {
         button.target = self
         button.action = #selector(buttonAction)
         
-        if let title = attributedTitle {
-            button.attributedTitle = title
+        if let attributedTitle {
+            button.attributedTitle = attributedTitle
         } else {
             button.title = title ?? ""
         }
@@ -31,7 +31,7 @@ public class Checkbox: NSStackView {
         addArrangedSubview(button)
         
         if orientation == .horizontal {
-            views.forEach { addArrangedSubview($0) }
+            addArrangedSubviews(views)
             
         } else {
             views.forEach { view in
@@ -59,7 +59,7 @@ public class Checkbox: NSStackView {
         }
         set {
             button.isEnabled = newValue
-            associatedViews.forEach { $0.enableSubviews(newValue) }
+            associatedViews.forEach { $0.setSubviewControlsEnabled(newValue && isOn) }
         }
     }
 
@@ -69,7 +69,7 @@ public class Checkbox: NSStackView {
         }
         set {
             button.state = newValue ? .on : .off
-            associatedViews.forEach { $0.enableSubviews(newValue) }
+            associatedViews.forEach { $0.setSubviewControlsEnabled(newValue && isEnabled) }
         }
     }
     
@@ -91,7 +91,7 @@ public class Checkbox: NSStackView {
     // MARK: - Actions
     
     @objc func buttonAction(_ sender: NSButton) {
-        associatedViews.forEach { $0.enableSubviews(sender.state == .on) }
+        associatedViews.forEach { $0.setSubviewControlsEnabled(sender.state == .on && isEnabled) }
         onChange?(sender.state == .on)
     }
 }

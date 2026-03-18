@@ -34,6 +34,7 @@ CocoaCompose includes these components
 - [ColorWell](https://github.com/PasiSalenius/CocoaCompose#colorwell)
 - [DatePicker](https://github.com/PasiSalenius/CocoaCompose#datepicker)
 - [FontPicker](https://github.com/PasiSalenius/CocoaCompose#fontpicker)
+- [HelpButton](https://github.com/PasiSalenius/CocoaCompose#helpbutton)
 - [Image](https://github.com/PasiSalenius/CocoaCompose#image)
 - [Label](https://github.com/PasiSalenius/CocoaCompose#label)
 - [Level](https://github.com/PasiSalenius/CocoaCompose#level)
@@ -41,16 +42,19 @@ CocoaCompose includes these components
 - [Radio](https://github.com/PasiSalenius/CocoaCompose#radio)
 - [Separator](https://github.com/PasiSalenius/CocoaCompose#separator)
 - [Slider](https://github.com/PasiSalenius/CocoaCompose#slider)
+- [ScrollView](https://github.com/PasiSalenius/CocoaCompose#scrollview)
 - [Switch](https://github.com/PasiSalenius/CocoaCompose#switch)
 - [Tabs](https://github.com/PasiSalenius/CocoaCompose#tabs)
 - [TextField](https://github.com/PasiSalenius/CocoaCompose#textfield)
 - [TextView](https://github.com/PasiSalenius/CocoaCompose#textview)
 - [TimePicker](https://github.com/PasiSalenius/CocoaCompose#timepicker)
 
-The following two components help build preference window content
-- [PreferenceGroup](https://github.com/PasiSalenius/CocoaCompose#preferencegroup)
+The following wrappers help lay out content in preference windows
 - [PreferenceList](https://github.com/PasiSalenius/CocoaCompose#preferencelist)
 - [PreferenceSection](https://github.com/PasiSalenius/CocoaCompose#preferencesection)
+- [PreferenceBlock](https://github.com/PasiSalenius/CocoaCompose#preferenceblock)
+- [PreferenceGroup](https://github.com/PasiSalenius/CocoaCompose#preferencegroup)
+- [PreferenceButtonSection](https://github.com/PasiSalenius/CocoaCompose#preferencebuttonsection)
 
 All of the components are configured to look right in a Mac app out of the box, and come with easy to use initialisers, and take a closure for value changes. All components are set to dynamic type `NSFont.TextStyle.body` by default.
 
@@ -68,13 +72,13 @@ let box = Box(title: "Title", orientation: .vertical, views: [
 
 ### Button
 
-Basic `NSButton` with `bezelStyle` set to `.rounded`. It can be configured with a title and an optional image with a symbol configuration.
+Basic `NSButton` with `bezelStyle` set to `.rounded`. It can be configured with a title and an optional image with a symbol configuration and a `keyEquivalent` for easy usage from keyboard.
 
 ```swift
 let image = NSImage(systemSymbolName: "checkmark.seal.fill", accessibilityDescription: nil)
 let configuration = NSImage.SymbolConfiguration(paletteColors: [.white, .systemGreen])
 
-let button = Button(title: "Click Me", image: image, symbolConfiguration: configuration) {
+let button = Button(title: "Click Me", image: image, symbolConfiguration: configuration, keyEquivalent: "\r") {
     // do something here ...
 }
 ```
@@ -183,6 +187,20 @@ picker.selectedFont = .preferredFont(forTextStyle: .body)
 
 <img width="250" alt="FontPicker" src="Assets/fontpicker.png"/>
 
+### HelpButton
+
+This is a `NSButton` with `bezelStyle` set to `.helpButton`. It is configured with a `onClick` closure that is called when the button is clicked.
+
+Some other components like `PreferenceButtonSection` also take a `onHelp` parameter that adds a help button to the button row.
+
+```swift
+let helpButton = HelpButton {
+    // do something here ...
+}
+```
+
+<img width="80" alt="HelpButton" src="Assets/helpbutton.png"/>
+
 ### Image
 
 `Image` is an `NSImageView` with an optional `onClick` handler and `CGSize`.
@@ -264,10 +282,22 @@ let radio = Radio(items: [
 Configure its selected item.
 
 ```swift
-radio.selectedIndex = 2
+radio.selectedIndex = 1
 ```
 
 <img width="250" alt="Radio" src="Assets/radio.png"/>
+
+### ScrollView
+
+`ScrollView` is an `NSScrollView` that sets an `NSClipView` as its `contentView` and a stack of views as its `documentView`. The stack automatically uses the appropriate system spacing.
+
+It defaults to only scrolling vertically. Setting `orientation: .horizontal` will switch both its item stack orientation and scrolling direction to horizontal.
+
+```swift
+ScrollView(orientation: .vertical, views: [
+    ...
+])
+```
 
 ### Separator
 
@@ -333,7 +363,7 @@ tabs.selectedIndex = 2
 
 ### TextField
 
-`TextField` is an `NSTextField` with an optional trailing `Label`.
+`TextField` is an `NSTextField` with an optional trailing `Label`. You should configure it with a `width` that fits your use case nicely.
 
 ```swift
 let textField = TextField(value: "30", trailingText: "seconds") { text in
@@ -400,6 +430,54 @@ Components can be composed together using compact code, that closely matches the
 
 We use two more components to initialise the content for a Mac preference window.
 
+### PreferenceList
+
+`PreferenceList` takes in a list of sections and takes care of appropriate spacing between them.
+
+Basically the only special sauce in `PreferenceList` is that it looks for leading titles labels in its views, and constrains them all to same width. This results in the familiar clean look of a Mac app preferences window (before the horror of Settings in Ventura).
+
+Set it up with a `PreferenceList.Style` to either center contents horizontally (preference window contents are typically centered) or expand contents to full width. 
+
+```swift
+PreferenceList(views: [
+    ...
+])
+``` 
+
+### PreferenceSection
+
+`PreferenceSection` takes a title, a list of components, and shows an optional footer text below all of the components in that section. The section title is shown to the left from the section components, right aligned. The title text should end with a colon.
+
+The views in the section can be placed horizontally with `orientation: .horizontal`. 
+
+```swift
+PreferenceSection(
+    title: "Options:",
+    footer: "This text appears below the section.",
+    orientation: .vertical,
+    views: [
+        ...
+    ]
+)
+```
+
+### PreferenceBlock
+
+As an alternative to `PreferenceSection`, if you need a left aligned title above the components, use a `PreferenceBlock` with optional footer text below. Also here the title text should end with a colon. This layout fits with option windows whose contents fill the window horizontally.
+
+The views in the section can be placed horizontally with `orientation: .horizontal`. 
+
+```swift
+PreferenceBlock(
+    title: "Options:",
+    footer: "This text appears below the block.",
+    orientation: .vertical,
+    views: [
+        ...
+    ]
+)
+```
+
 ### PreferenceGroup
 
 `PreferenceGroup` takes in a list of items that each have a title and horizontal stack of views.
@@ -413,34 +491,27 @@ PreferenceGroup(items: [
 ])
 ``` 
 
-### PreferenceList
+### PreferenceButtonSection
 
-`PreferenceList` takes in a list of sections and takes care of appropriate spacing between them.
+`PreferenceButtonSection` takes a list of buttons that it aligns to the right edge. It constrains all buttons to same width. Defining `onHelp` closure as a parameter adds a `HelpButton` at the left edge. 
 
-Basically the only special sauce in `PreferenceList` is that it looks for leading titles labels in its views, and constrains them all to same width. This results in the familiar clean look of a Mac app preferences window (before the horror of Settings in Ventura).  
-
-```swift
-PreferenceList(views: [
-    ...
-])
-``` 
-
-### PreferenceSection
-
-`PreferenceSection` takes a title, a list of components, and shows an optional footer text below all of the components in that section. The section title is shown to the left from the section components, right aligned. The title text should end with a colon.
-
-The views in the section can be places horizontally with `orientation: .horizontal`. 
+Use it to add cancel and done buttons at the bottom of a preference window.
 
 ```swift
-PreferenceSection(
-    title: "Options:",
-    footer: "This text appears below a section.",
-    orientation: .vertical,
-    views: [
+PreferenceButtonSection(buttons: [
+    Button(title: "Cancel", keyEquivalent: "\u{1b}") { [unowned self] in
         ...
-    ]
-)
+    },
+    Button(title: "Done", keyEquivalent: "\r") { [unowned self] in
+        ...
+    }, onHelp: {
+        let url = URL(string: "https://example.com/")!
+        NSWorkspace.shared.open(url)
+    }),
+]),
 ```
+
+<img width="600" alt="PreferenceButtonSection" src="Assets/preferencebuttonsection.png"/>
 
 ### Example
 
@@ -452,86 +523,86 @@ The following example initialises a preferences window using `PreferenceList` co
 override func loadView() {
     view = NSView()
     view.wantsLayer = true
-
+    
     title = "Test"
     
-        let list = PreferenceList(views: [
-            PreferenceSection(title: "Enable:", views: [
-                Switch(isOn: true) { isOn in
-
-                },
-            ]),
-            PreferenceSection(title: "Choose any one:", views: [
-                Radio(items: [
-                    .init(title: "One"),
-                    .init(title: "Two", views: [
-                        PopUp(items: ["12", "13"].map { .init(title: $0) }, selectedIndex: 0, trailingText: "points") { index, title in
-                            
-                        }
-                    ]),
-                    .init(title: "Three", views: [
-                        TextField(value: "15.0", trailingText: "milliseconds", width: 50) { text in
-                    
-                        }
-                    ])], selectedIndex: 0) { index, previousIndex in
-                    
-                    },
-            ]),
-            Separator(),
-            PreferenceGroup(items: [
-                .init(title: "First:", views: [
-                    PopUp(items: ["One", "Two"].map { .init(title: $0) }, selectedIndex: 0) { index, title in
+    let list = PreferenceList(style: .center, views: [
+        PreferenceSection(title: "Enable:", views: [
+            Switch(isOn: true) { isOn in
+                
+            },
+        ]),
+        PreferenceSection(title: "Choose any one:", views: [
+            Radio(items: [
+                .init(title: "One"),
+                .init(title: "Two", views: [
+                    PopUp(items: ["12", "13"].map { .init(title: $0) }, selectedIndex: 0, trailingText: "points") { index, title in
                         
                     }
                 ]),
-                .init(title: "Second:", views: [
-                    PopUp(items: ["Foobar", "Plop"].map { .init(title: $0) }, selectedIndex: 0) { index, title in
+                .init(title: "Three", views: [
+                    TextField(value: "15.0", trailingText: "milliseconds", width: 50) { text in
                         
                     }
-                ]),
-            ]),
-            Separator(),
-            PreferenceSection(title: "Test:", footer: "This here demonstrates some footer text that is shown below a section of items.", views: [
-                Checkbox(title: "Click me", isOn: true) { enabled in
+                ])], selectedIndex: 0) { index, previousIndex in
                     
                 },
-                Checkbox(title: "Me too", isOn: true) { enabled in
+        ]),
+        Separator(),
+        PreferenceGroup(items: [
+            .init(title: "First:", views: [
+                PopUp(items: ["One", "Two"].map { .init(title: $0) }, selectedIndex: 0) { index, title in
+                    
+                }
+            ]),
+            .init(title: "Second:", views: [
+                PopUp(items: ["Foobar", "Plop"].map { .init(title: $0) }, selectedIndex: 0) { index, title in
+                    
+                }
+            ]),
+        ]),
+        Separator(),
+        PreferenceSection(title: "Test:", footer: "This here demonstrates some footer text that is shown below a section of items.", views: [
+            Checkbox(title: "Click me", isOn: true) { enabled in
+                
+            },
+            Checkbox(title: "Me too", isOn: true) { enabled in
+                
+            },
+        ]),
+        Separator(),
+        PreferenceSection(title: "Start date:", orientation: .horizontal, alignment: .centerY, spacing: 20, views: [
+            CalendarPicker() { date in
+                
+            },
+            ClockPicker() { date in
+                
+            },
+        ]),
+        Separator(),
+        PreferenceSection(title: "Maximum level:", views: [
+            Box(views: [
+                Level(value: 0.3) { value in
                     
                 },
-            ]),
-            Separator(),
-            PreferenceSection(title: "Start date:", orientation: .horizontal, alignment: .centerY, spacing: 20, views: [
-                CalendarPicker() { date in
-
+                Slider() { value in
+                    print("value changed to \(value)")
                 },
-                ClockPicker() { date in
-
-                },
-            ]),
-            Separator(),
-            PreferenceSection(title: "Maximum level:", views: [
-                Box(views: [
-                    Level(value: 0.3) { value in
-
-                    },
-                    Slider() { value in
-                        print("value changed to \(value)")
-                    },
-                ])
-            ]),
-            Separator(),
-            PreferenceSection(title: "Body text:", views: [
-                FontPicker() { font in
-                    
-                },
-                ColorWell(color: .blue, style: .default) { color in
-                    
-                },
-                Image(named: "AppIcon Mac", size: CGSize(width: 50, height: 50)) {
-                    
-                },
-            ]),
-        ])
+            ])
+        ]),
+        Separator(),
+        PreferenceSection(title: "Body text:", views: [
+            FontPicker() { font in
+                
+            },
+            ColorWell(color: .blue, style: .default) { color in
+                
+            },
+            Image(named: "AppIcon Mac", size: CGSize(width: 50, height: 50)) {
+                
+            },
+        ]),
+    ])
     
     view.addSubview(list)
     list.translatesAutoresizingMaskIntoConstraints = false
@@ -541,7 +612,7 @@ override func loadView() {
         list.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
         list.bottomAnchor.constraint(lessThanOrEqualTo: view.bottomAnchor, constant: -20)
     ])
-
+    
     preferredContentSize = CGSize(width: 500, height: view.fittingSize.height)
 }
 ```

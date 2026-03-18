@@ -20,7 +20,7 @@ public class PopUp: NSStackView {
         }
     }
     
-    public init(items: [Item] = [], selectedIndex: Int = -1, trailingText: String? = nil, onChange: ((Int, String) -> Void)? = nil) {
+    public init(items: [Item] = [], selectedIndex: Int = -1, trailingText: String? = nil, isTruncating: Bool = false, controlSize: NSControl.ControlSize = .regular, onChange: ((Int, String) -> Void)? = nil) {
         self.items = items
         self.onChange = onChange
         
@@ -29,9 +29,15 @@ public class PopUp: NSStackView {
         alignment = .firstBaseline
         spacing = 7
 
-        button.font = .preferredFont(forTextStyle: .body)
+        button.font = .systemFont(ofSize: NSFont.systemFontSize(for: controlSize))
+        button.controlSize = controlSize
         button.target = self
         button.action = #selector(buttonAction)
+        
+        // allow button to take less width than selected item title
+        button.cell?.lineBreakMode = .byTruncatingTail
+        
+        button.setContentCompressionResistancePriority(isTruncating ? .init(rawValue: 1) : .defaultHigh, for: .horizontal)
         
         items.forEach {
             button.addItem(withTitle: "\($0.title)")
@@ -54,6 +60,11 @@ public class PopUp: NSStackView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    public var isEnabled: Bool {
+        get { button.isEnabled }
+        set { button.isEnabled = newValue }
+    }
+
     public var selectedIndex: Int {
         get { button.indexOfSelectedItem }
         set { button.selectItem(at: newValue) }

@@ -1,15 +1,39 @@
 import Cocoa
 
-public class PreferenceList: NSStackView {
-    public init(views: [NSView]) {
+public class PreferenceList: NSView {
+    public enum Style {
+        case center
+        case fullWidth
+    }
+    
+    public init(style: Style, alignment: NSLayoutConstraint.Attribute = .leading, views: [NSView]) {
         super.init(frame: .zero)
         
-        distribution = .fill
-        orientation = .vertical
-        alignment = .leading
-        spacing = 14
+        let stackView = ConstrainingStackView(orientation: .vertical, alignment: alignment, views: views)
+        stackView.distribution = .fill
+        stackView.spacing = 14
         
-        views.forEach { addArrangedSubview($0) }
+        addSubview(stackView)
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+
+        switch style {
+        case .center:
+            NSLayoutConstraint.activate([
+                stackView.topAnchor.constraint(equalTo: topAnchor),
+                stackView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor),
+                stackView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
+                stackView.bottomAnchor.constraint(equalTo: bottomAnchor),
+                stackView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            ])
+
+        case .fullWidth:
+            NSLayoutConstraint.activate([
+                stackView.topAnchor.constraint(equalTo: topAnchor),
+                stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
+                stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
+                stackView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            ])
+        }
         
         alignLeadAnchors(views: views)
     }
@@ -29,9 +53,9 @@ public class PreferenceList: NSStackView {
     
     private func leadAnchor(view: NSView) -> NSLayoutDimension? {
         if let preferenceSection = view as? PreferenceSection {
-            return preferenceSection.leadAnchor
+            return preferenceSection.leadingWidthAnchor
         } else if let preferenceGroup = view as? PreferenceGroup {
-            return preferenceGroup.leadAnchor
+            return preferenceGroup.leadingWidthAnchor
         }
         
         return nil

@@ -62,10 +62,6 @@ public class Tabs: NSView {
             centerXAnchor.constraint(equalTo: segmentedControl.centerXAnchor),
         ])
 
-        let width = contentView.widthAnchor.constraint(equalToConstant: 10_000)
-        width.priority = .defaultLow
-        width.isActive = true
-
         self.selectedIndex = selectedIndex
     }
     
@@ -97,10 +93,8 @@ public class Tabs: NSView {
 
         let item = items[index]
         
-        let stackView = NSStackView(views: item.views)
+        let stackView = ConstrainingStackView(orientation: item.orientation, alignment: item.orientation == .vertical ? .width : .height, views: item.views)
         stackView.distribution = .fill
-        stackView.orientation = item.orientation
-        stackView.alignment = item.orientation == .vertical ? .width : .height
         stackView.spacing = item.orientation == .vertical ? 7 : 10
         
         contentView.addSubview(stackView)
